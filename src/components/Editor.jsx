@@ -1,4 +1,5 @@
 import { useState } from "react"
+import '../sass/Editor.sass'
 
 export default function Editor({value, updateValue}){
     const [editorOpenState, updateEditorOpenState] = useState(false)
@@ -18,7 +19,7 @@ return (
                 <i className="fa fa-free-code-camp"></i>
                 <p>Editor</p>
             </div>
-            <i onClick={toggleEditorOpenState} className={`fa ${editorOpenState ? 'fa-compress' : 'fa-arrows-alt'}`}></i>
+            <i onClick={toggleEditorOpenState} className={`open-and-close-editor-button fa ${editorOpenState ? 'fa-compress' : 'fa-arrows-alt'}`}></i>
         </div>
         <textarea value={value} onChange={handleEditorChange} className={`editor-textarea ${editorOpenState ? 'open' : ''}`}></textarea>
     </div>
