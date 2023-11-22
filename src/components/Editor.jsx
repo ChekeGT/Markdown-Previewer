@@ -1,4 +1,5 @@
 import { useState } from "react"
+import ComponentHeader from "./ComponentHeader"
 import '../sass/Editor.sass'
 
 export default function Editor({value, updateValue}){
@@ -14,13 +15,7 @@ export default function Editor({value, updateValue}){
     }
 return (
     <div className="editor-general-container">
-        <div className="editor-header">
-            <div className="icon-and-text-container">
-                <i className="fa fa-free-code-camp"></i>
-                <p>Editor</p>
-            </div>
-            <i onClick={toggleEditorOpenState} className={`open-and-close-editor-button fa ${editorOpenState ? 'fa-compress' : 'fa-arrows-alt'}`}></i>
-        </div>
+        <ComponentHeader title={'Editor'} toggleOpenState={toggleEditorOpenState} openState={editorOpenState}/>
         <textarea value={value} onChange={handleEditorChange} className={`editor-textarea ${editorOpenState ? 'open' : ''}`}></textarea>
     </div>
 )
