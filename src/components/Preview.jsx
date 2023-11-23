@@ -1,5 +1,6 @@
 import { useState } from "react"
 import ComponentHeader from "./ComponentHeader"
+import "../sass/Preview.sass"
 
 export default function Preview({markdownText}){
     const [previewOpenState, updatePreviewOpenState] = useState(false)
@@ -13,9 +14,9 @@ export default function Preview({markdownText}){
     }
 
     return (
-        <div>
-            <ComponentHeader title={'Preview'} toggleOpenState={togglePreviewOpenState} openState={updatePreviewOpenState}/>
-            <div>
+        <div className="preview-component">
+            <ComponentHeader title={'Preview'} toggleOpenState={togglePreviewOpenState} openState={previewOpenState}/>
+            <div className="markdown-preview-container">
                 {transfromMarkdownTextToHtml(markdownText)}
             </div>
         </div>
