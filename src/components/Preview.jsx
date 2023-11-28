@@ -9,101 +9,365 @@ export default function Preview({markdownText}){
         updatePreviewOpenState(!previewOpenState)
     }
 
+    const sortMatchObj = (matchObj) => {
+        let {transformedMatches, matchIndexes } = matchObj
+       
+        let orderedTransformedMatches = []
 
-    
+        const matchIndexesCopy = [...matchIndexes]
+        matchIndexes.sort((a,b) => {
+            return a[0] - b[0] != 0 ? a [0] - b[0] : b[1] - a[1]
+        }
+        )
 
-    function applyInlineMarkdown(markdownLine){
+        matchIndexes.forEach((matchIndex, i) => {
+            const previousIndex = matchIndexesCopy.indexOf(matchIndex)
+
+            orderedTransformedMatches.push({
+                value: transformedMatches[previousIndex],
+                currentIndex: i
+            })
+        })
+
+        orderedTransformedMatches.sort((a,b) => a.currentIndex - b.currentIndex)
+
+        orderedTransformedMatches = orderedTransformedMatches.map((obj) => obj.value )
+
+        let orderedMatchObj = {
+            transformedMatches: orderedTransformedMatches,
+            matchIndexes: matchIndexes
+        }
+        return orderedMatchObj
+    }
+
+
+    const transformMatchObjToHtml = (matchObj, line) => {
+        matchObj = sortMatchObj(matchObj)
+        const {transformedMatches, matchIndexes } = matchObj
         
-        const transformMatchObjToHtml = (matchObj, line) => {
+
+
+        let startingIndexForEmptyText = 0
+
+
+        const textArr = []
+
+
+        matchIndexes.forEach((matchIndex, i) => {
+            const emptyText = <>{line.slice(startingIndexForEmptyText, matchIndex[0] - startingIndexForEmptyText)}</>
+            const editedText = <>{transformedMatches[i]}</>
+
+            textArr.push(emptyText, editedText)
+
+            startingIndexForEmptyText = matchIndex[1] + 1
+            
+            if (i == matchIndexes.length - 1){
+                textArr.push(<>{line.slice(startingIndexForEmptyText, line.length)}</>)
+            }
+        })
+        
+        return (<>{matchIndexes.length > 0 ? textArr : line}</>)
+    }
+
+    const isMatchAlreadyPresent = (matchObj, matchIndex) => {
+        const { matchIndexes } = matchObj
+        
+
+        for (let i = 0; i < matchIndexes.length; i++){
+            const obj = matchIndexes[i]
+            for (let j = obj[0]; j <= obj[1]; j++){
+                for (let k = matchIndex[0]; k <= matchIndex[1]; k++){
+                    if (k == j){
+                        return true
+                    }
+                }
+            }
+        }
+        
+        return false
+    }
+
+
+    const joinMatchObjects = (matchObjects) => { 
+        
+        let joinedMatchObj = {
+            transformedMatches: [],
+            matchIndexes: []
+        }
+        matchObjects.forEach((matchObj) => {
             const {transformedMatches, matchIndexes } = matchObj
-
-
-            let startingIndexForEmptyText = 0
-
-
-            const textArr = []
-
-            matchIndexes.forEach((matchIndex, i) => {
-                const emptyText = <>{line.slice(startingIndexForEmptyText, matchIndex[0] - startingIndexForEmptyText)}</>
-                const editedText = <>{transformedMatches[i]}</>
-
-                textArr.push(emptyText, editedText)
-
-                startingIndexForEmptyText = matchIndex[1] + 1
-                
-                if (i == matchIndexes.length - 1){
-                    textArr.push(<>{line.slice(startingIndexForEmptyText, line.length)}</>)
-                }
-            })
-            
-
-            return (<>{matchIndexes.length > 0 ? textArr : line}</>)
-        }
-
-        const isMatchAlreadyPresent = (matchObj, matchIndex) => {
-            const { matchIndexes } = matchObj
-            
-
             for (let i = 0; i < matchIndexes.length; i++){
-                const obj = matchIndexes[i]
-                for (let j = obj[0]; j <= obj[1]; j++){
-                    for (let k = matchIndex[0]; k <= matchIndex[1]; k++){
-                        if (k == j){
-                            return true
-                        }
-                    }
+                const transformedMatch = transformedMatches[i]
+                const matchIndex = matchIndexes[i]
+                
+                if (!isMatchAlreadyPresent(joinedMatchObj, matchIndex)){
+                    joinedMatchObj.transformedMatches.push(transformedMatch)
+                    joinedMatchObj.matchIndexes.push(matchIndex)       
                 }
             }
-            
-            return false
+        })
+
+        return joinedMatchObj
+    }
+
+    const getMatchObj = (regex, transformFunction, line) => {
+        const transformedMatches = []
+        const matchIndexes = []
+
+        // There is a bug that causes that if this line is not here
+        // The regex is not detecting nothing. I do not know a cause 
+        // for that.
+        line.match(regex)
+
+        let match;
+        while ((match = regex.exec(line)) != null){
+            transformedMatches.push(transformFunction(match[0]))
+            matchIndexes.push([match.index, match.index + match[0].length - 1])
         }
 
-        const joinMatchObjects = (matchObjects) => { 
-            
-            let joinedMatchObj = {
-                transformedMatches: [],
-                matchIndexes: []
-            }
-            matchObjects.forEach((matchObj) => {
-                const {transformedMatches, matchIndexes } = matchObj
-                for (let i = 0; i < matchIndexes.length; i++){
-                    const transformedMatch = transformedMatches[i]
-                    const matchIndex = matchIndexes[i]
-                    
-                    if (!isMatchAlreadyPresent(joinedMatchObj, matchIndex)){
-                        joinedMatchObj.transformedMatches.push(transformedMatch)
-                        joinedMatchObj.matchIndexes.push(matchIndex)       
-                    }
-                }
-            })
 
-
-            return joinedMatchObj
+        const matchObj = {
+            transformedMatches: transformedMatches,
+            matchIndexes: matchIndexes
         }
 
-        const getMatchObj = (regex, transformFunction, line) => {
+        return matchObj
+    }
+
+    function transformcodeSnippetIntoHtml(txt){
+        let lines = txt.split('\n').map((line) => {
+            line = line.replace(/^(`{1,3}) /, '').replace(/ (`{1,3})$/, '')
+            return line
+        })
+
+        const getMatchObj = (regexes, transformFunction, line) => {
             const transformedMatches = []
             const matchIndexes = []
+    
+            
 
-            // There is a bug that causes that if this line is not here
-            // The regex is not detecting nothing. I do not know a cause 
-            // for that.
-            line.match(regex)
+            regexes.forEach((regex) => {
 
-            let match;
-            while ((match = regex.exec(line)) != null){
-                transformedMatches.push(transformFunction(match[0]))
-                matchIndexes.push([match.index, match.index + match[0].length - 1])
-            }
-
-
+                // There is a bug that causes that if this line is not here
+                // The regex is not detecting nothing. I do not know a cause 
+                // for that.
+                line.match(regex)
+    
+                let match;
+                while ((match = regex.exec(line)) != null){
+                    transformedMatches.push(transformFunction(match[0]))
+                    matchIndexes.push([match.index, match.index + match[0].length - 1])
+                }
+            })
+            
+    
             const matchObj = {
                 transformedMatches: transformedMatches,
                 matchIndexes: matchIndexes
             }
-
+    
             return matchObj
         }
+
+        const generalDetectFunction = (keywords, txt) => {
+            for (let i = 0; i < keywords.length; i++){
+                const keyword = keywords[i]
+                if (keyword.test(txt)){
+                    return true
+                }
+            }
+            return false
+        }
+        const inLineDetectionAndTransform = [
+            {
+                keywords: [
+                    /\+/g, /-/g, /\*/g, /\//g, /%/g, 
+                    /\+\+/g, /--/g,
+                    /=/g, /\+=/g, /-=/g, /\*=/g, /=/g, /%=/g,
+                    /==/g, /===/g, /!=/g, /!==/g,
+                    />/g, /</g, />=/g, /<=/g,
+                    /&&/g, /\|\|/g, /!/g,
+                    /&/g, /\|/g, /\^/g, /~/g, /<</g, />>/g, />>>/g,
+                    /\?/g, /:/g,
+                  ],
+                  detectFunction: function(txt){
+                    return generalDetectFunction(this.keywords, txt)
+                  },
+                  transformFunction: (txt) => (<span className="token operator">{txt}</span>),
+                  getMatchObj: function (txt){
+                    return getMatchObj(this.keywords, this.transformFunction, txt)
+                }
+            },
+            {
+                keywords: [
+                    /var/g,
+                    /let/g,
+                    /const/g,
+                    /if/g,
+                    /else/g,
+                    /switch/g,
+                    /case/g,
+                    /break/g,
+                    /for/g,
+                    /while/g,
+                    /do/g,
+                    /function/g,
+                    /return/g,
+                    /this/g,
+                    /new/g,
+                    /typeof/g,
+                    /null/g,
+                    /undefined/g,
+                    /true/g,
+                    /false/g,
+                    /try/g,
+                    /catch/g,
+                    /throw/g,
+                    /finally/g,
+                    /delete/g
+                ],
+                detectFunction: function(txt){
+                    return generalDetectFunction(this.keywords, txt)
+                },
+                transformFunction: function(txt){
+                    return (<span className="token keyword">{txt}</span>)
+                },
+                getMatchObj: function (txt){
+                    return getMatchObj(this.keywords, this.transformFunction, txt)
+                }
+            },
+            {
+                regexes: [
+                    /var [^;=]+[ ]*(=|;)/g,
+                    /let [^;=]+[ ]*(=|;)/g,
+                    /const [^;=]+[ ]*(=)/g,
+                    /function.+\(/g,
+                    /new .+\(/g 
+                ],
+                firstNegativeRegexes: [
+                    /^(var) /,
+                    /^(let) /,
+                    /^(const) /,
+                    /^(function) /,
+                    /^(new) /
+                ],
+                secondNegativeRegexes: [
+                    /=$|;$/,
+                    /=$|;$/,
+                    /=$/,
+                    /\($/,
+                    /\($/
+                ],
+                detectFunction: function(txt){
+
+                    return generalDetectFunction(this.regexes, txt)
+                },
+                transformFunction: (txt) => (<span className={`token name`}>{txt}</span>),
+                getMatchObj: function (txt){
+
+                    const transformedMatches = []
+                    const matchIndexes = []
+
+                    const getTransformedMatch = (match, negativeRegexIndex) =>  this.transformFunction(match.replace(this.firstNegativeRegexes[negativeRegexIndex], '').replace(this.secondNegativeRegexes[negativeRegexIndex], ''))
+                    
+
+                    let match;
+                    this.regexes.forEach((regex, i) => {
+                        txt.match(regex)
+                        
+                        while((match = regex.exec(txt)) != null){
+
+                            transformedMatches.push(getTransformedMatch(match[0], i))
+                            const keywordLength = match[0].match(this.firstNegativeRegexes[i])[0].length
+                            const start = match.index + keywordLength - 1
+                            matchIndexes.push([start, start + match[0].length - keywordLength - 1])
+                        }
+                    })
+            
+                    const matchObj = {
+                        transformedMatches: transformedMatches,
+                        matchIndexes: matchIndexes
+                    }
+
+
+
+            
+                    return matchObj
+                }
+            },
+            {
+                keywords: [
+                    /;/g,
+                    /:/g,
+                    /,/g,
+                    /\(/g,
+                    /\)/g,
+                    /\{/g,
+                    /\}/g,
+                    /\[/g,
+                    /\]/g,
+                    /\./g,
+                    /\?/g
+                ],
+                detectFunction: function(txt){
+                    return generalDetectFunction(this.keywords, txt)
+                },
+                transformFunction: (txt) => (<span className="token punctuation">{txt}</span>),
+                getMatchObj: function (txt){
+                    return getMatchObj(this.keywords, this.transformFunction, txt)
+                }
+            },
+            {
+                regex: /'[^']+'|"[^"]+"|`[^`]+`/,
+                detectFunction: function(txt){
+                    return this.regex.test(txt)
+                },
+                transformFunction: (txt) => (<span className="token string">{txt}</span>),
+                getMatchObj: function (txt){
+                    return getMatchObj(this.keywords, this.transformFunction, txt)
+                }
+            },
+        ]
+        
+        const applyInlineDetectionAndTransform = (line) => {
+            let matchObjects = []
+            inLineDetectionAndTransform.forEach((obj) => {
+                if (obj.detectFunction(line)){
+                    matchObjects.push(obj.getMatchObj(line))
+                }
+            })
+            const joinedMatchObjects = joinMatchObjects(matchObjects)
+            return (<>{transformMatchObjToHtml(joinedMatchObjects, line)}</>)
+        }
+        const allLineDetectionAndTransform = [
+            {
+            regex: /^([ ]*\/\/)/g,
+            name: 'comment',
+            detectFunction: function(line){
+                return this.regex.test(line)
+            },
+            transformFunction: function(line){
+                return (<span className={`token ${this.name}`}>{line.replace(this.regex, '')}</span>)
+            }
+            },
+        ]
+        lines = lines.map((line) => {
+            for (let i = 0; i < allLineDetectionAndTransform.length; i++){
+                const obj = allLineDetectionAndTransform[i]
+                if (obj.detectFunction(line)){
+                    return obj.transformFunction(line)
+                }
+            }
+            return <>{applyInlineDetectionAndTransform(line)}</>
+        })
+        
+        
+        return (<>{lines}</>)
+        
+    }
+    function applyInlineMarkdown(markdownLine){
+        
+        
         const inLineMarkdownDetectionAndTransform = [
             {
                 regex: /(\*\* [^*]+ \*\*)/g,
@@ -123,17 +387,12 @@ export default function Preview({markdownText}){
                 transformFunction: ((txt) => (<i>{txt.replace(/(^\*)/, '').replace(/\*$/, '')}</i>)),
             },
             {
-                regex: /(` [^`]+ `)/g,
+                regex: /(`{1,3} [^`]+ `{1,3})/g,
                 detectFunction: function (line){
                     return this.regex.test(line)
                 },
-                getMatchObj: function (inLineMatch) {
-                    return inLineMatch
-                },
                 transformFunction: function(txt){
-                    // Pending work here
-                    txt = txt.replace(/^`/, '').replace(/`$/, '')
-                    return txt
+                    return (<code>{transformcodeSnippetIntoHtml(txt)}</code>)
                 }
             }
         ]
