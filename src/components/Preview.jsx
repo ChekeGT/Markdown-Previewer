@@ -45,26 +45,53 @@ export default function Preview({markdownText}){
         matchObj = sortMatchObj(matchObj)
         const {transformedMatches, matchIndexes } = matchObj
         
+        
+        const doesNextMatchIndexSkipsText = (matchIndexes, currentIndex) => {
+            if (!(currentIndex == matchIndexes.length - 1) ){
+                const currentLastIndex = matchIndexes[currentIndex][1]
+                const nextFirstIndex = matchIndexes[currentIndex + 1][0]
 
-
-        let startingIndexForEmptyText = 0
+                if (nextFirstIndex - currentLastIndex > 0){
+                    return true
+                }
+            }
+            return false
+        }
 
 
         const textArr = []
 
 
         matchIndexes.forEach((matchIndex, i) => {
-            const emptyText = <>{line.slice(startingIndexForEmptyText, matchIndex[0] - startingIndexForEmptyText)}</>
+
+            
             const editedText = <>{transformedMatches[i]}</>
 
-            textArr.push(emptyText, editedText)
-
-            startingIndexForEmptyText = matchIndex[1] + 1
-            
-            if (i == matchIndexes.length - 1){
-                textArr.push(<>{line.slice(startingIndexForEmptyText, line.length)}</>)
+            if (i == 0){
+                const emptyText = <>{line.slice(0, matchIndex[0])}</>
+                textArr.push(emptyText, editedText)
+            }else{
+                textArr.push(editedText)
             }
+
+            if (doesNextMatchIndexSkipsText(matchIndexes, i)){
+                const nextMatchIndex = matchIndexes[i + 1]
+                console.log(`line: ${line} start: ${matchIndex[1]} end: ${nextMatchIndex[0]} , slice: ${line.slice(matchIndex[1] + 1, nextMatchIndex[0])}`)
+                const plainText = <>{line.slice(matchIndex[1] + 1, nextMatchIndex[0])}</>
+
+                textArr.push(plainText)
+            }
+            if (i == matchIndexes.length - 1){
+                const plainText = <>{line.slice(matchIndex[1] + 1, )}</>
+                textArr.push(plainText)
+            }
+
+
+            
+
+            
         })
+
         
         return (<>{matchIndexes.length > 0 ? textArr : line}</>)
     }
@@ -179,6 +206,7 @@ export default function Preview({markdownText}){
             return false
         }
         const inLineDetectionAndTransform = [
+            
             {
                 keywords: [
                     /\+/g, /-/g, /\*/g, /\//g, /%/g, 
@@ -268,7 +296,7 @@ export default function Preview({markdownText}){
                     const transformedMatches = []
                     const matchIndexes = []
 
-                    const getTransformedMatch = (match, negativeRegexIndex) =>  this.transformFunction(match.replace(this.firstNegativeRegexes[negativeRegexIndex], '').replace(this.secondNegativeRegexes[negativeRegexIndex], ''))
+                    const getTransformedText = (match, negativeRegexIndex) =>  match.replace(this.firstNegativeRegexes[negativeRegexIndex], '').replace(this.secondNegativeRegexes[negativeRegexIndex], '')
                     
 
                     let match;
@@ -277,18 +305,70 @@ export default function Preview({markdownText}){
                         
                         while((match = regex.exec(txt)) != null){
 
-                            transformedMatches.push(getTransformedMatch(match[0], i))
+                            const transformedText = getTransformedText(match[0], i)
+
+                            transformedMatches.push(this.transformFunction(transformedText))
                             const keywordLength = match[0].match(this.firstNegativeRegexes[i])[0].length
-                            const start = match.index + keywordLength - 1
-                            matchIndexes.push([start, start + match[0].length - keywordLength - 1])
+                            const start = match.index + keywordLength
+                            const end = start + match[0].length - keywordLength - 2
+
+                            matchIndexes.push([start, end])
                         }
                     })
-            
+                    
                     const matchObj = {
                         transformedMatches: transformedMatches,
                         matchIndexes: matchIndexes
                     }
+                    
 
+            
+                    return matchObj
+                }
+            },
+            {
+                regexes: [
+                    /(var [^;=]+[ ]*=[ ]*[^;=]+;)/g,
+                    /(let [^;=]+[ ]*=[ ]*[^;=]+;)/g,
+                    /(const [^;=]+[ ]*=[ ]*[^;=]+;)/g,
+                ],
+                negativeRegexes: [
+                    /(var [^;=]+[ ]*=)/,
+                    /(let [^;=]+[ ]*=)/,
+                    /(const [^;=]+[ ]*=)/
+                ],
+                detectFunction: function(txt){
+                    return generalDetectFunction(this.regexes, txt)
+                },
+                transformFunction: (txt) => (<span className={`token value`}>{txt}</span>),
+                getMatchObj: function (txt){
+
+                    const transformedMatches = []
+                    const matchIndexes = []
+
+
+                    const getTransformedText = (match, negativeRegexIndex) =>  match.replace(this.negativeRegexes[negativeRegexIndex], '').replace(/;/g, '')
+                    
+
+                    let match;
+                    this.regexes.forEach((regex, i) => {
+                        txt.match(regex)
+                        
+                        while((match = regex.exec(txt)) != null){
+
+                            const transformedText = getTransformedText(match[0], i)
+
+                            transformedMatches.push(this.transformFunction(transformedText))
+                            const keywordLength = match[0].match(this.negativeRegexes[i])[0].length - 1
+                            const start = match.index + keywordLength + 1
+                            const end = start + transformedText.length - 1
+                            matchIndexes.push([start,  end])
+                        }
+                    })
+                    const matchObj = {
+                        transformedMatches: transformedMatches,
+                        matchIndexes: matchIndexes
+                    }
 
 
             
@@ -337,6 +417,7 @@ export default function Preview({markdownText}){
                 }
             })
             const joinedMatchObjects = joinMatchObjects(matchObjects)
+
             return (<>{transformMatchObjToHtml(joinedMatchObjects, line)}</>)
         }
         const allLineDetectionAndTransform = [
