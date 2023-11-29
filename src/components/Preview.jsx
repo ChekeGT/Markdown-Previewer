@@ -76,7 +76,6 @@ export default function Preview({markdownText}){
 
             if (doesNextMatchIndexSkipsText(matchIndexes, i)){
                 const nextMatchIndex = matchIndexes[i + 1]
-                console.log(`line: ${line} start: ${matchIndex[1]} end: ${nextMatchIndex[0]} , slice: ${line.slice(matchIndex[1] + 1, nextMatchIndex[0])}`)
                 const plainText = <>{line.slice(matchIndex[1] + 1, nextMatchIndex[0])}</>
 
                 textArr.push(plainText)
@@ -328,6 +327,59 @@ export default function Preview({markdownText}){
             },
             {
                 regexes: [
+                    /function[^;=]+\([^(;)]+\)/g,
+                    /new [^;=]+\([^(;)]+\)/g 
+                ],
+                negativeRegexes: [
+                    /function[^;=]+\(/g,
+                    /new [^;=]+\(/
+                ],
+                detectFunction: function(txt){
+                    return generalDetectFunction(this.regexes, txt)
+                },
+                transformFunction: (txt) => (<span className={`token parameter`}>{txt}</span>),
+                getMatchObj: function (txt){
+
+                    const transformedMatches = []
+                    const matchIndexes = []
+
+
+                    const getParameters = (match, negativeRegexIndex) =>  match.replace(this.negativeRegexes[negativeRegexIndex], '').replace(/\)/g, '').split(',')
+
+                    let match;
+                    this.regexes.forEach((regex, i) => {
+                        txt.match(regex)
+                        
+                        while((match = regex.exec(txt)) != null){
+
+                            const parameters = getParameters(match[0], i)
+                            
+                            const keywordLength = match[0].match(this.negativeRegexes[i])[0].length - 1
+                            let parametersStart = match.index + keywordLength + 1
+
+
+                            parameters.forEach((parameter) => {
+                                transformedMatches.push(this.transformFunction(parameter))
+                                
+                                let parameterEndIndex = parametersStart + parameter.length - 1
+                                matchIndexes.push([parametersStart, parameterEndIndex ])
+
+                                parametersStart = parameterEndIndex + 2
+                            })
+                        }
+                    })
+                    const matchObj = {
+                        transformedMatches: transformedMatches,
+                        matchIndexes: matchIndexes
+                    }
+
+                    console.log(matchObj)
+            
+                    return matchObj
+                }
+            },
+            {
+                regexes: [
                     /(var [^;=]+[ ]*=[ ]*[^;=]+;)/g,
                     /(let [^;=]+[ ]*=[ ]*[^;=]+;)/g,
                     /(const [^;=]+[ ]*=[ ]*[^;=]+;)/g,
@@ -398,13 +450,13 @@ export default function Preview({markdownText}){
                 }
             },
             {
-                regex: /'[^']+'|"[^"]+"|`[^`]+`/,
+                regex: /'[^']+'|"[^"]+"|`[^`]+`/g,
                 detectFunction: function(txt){
                     return this.regex.test(txt)
                 },
                 transformFunction: (txt) => (<span className="token string">{txt}</span>),
                 getMatchObj: function (txt){
-                    return getMatchObj(this.keywords, this.transformFunction, txt)
+                    return getMatchObj([this.regex], this.transformFunction, txt)
                 }
             },
         ]
