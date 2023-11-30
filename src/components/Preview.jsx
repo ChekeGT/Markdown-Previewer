@@ -789,9 +789,62 @@ export default function Preview({markdownText}){
                     }
                     indexObjects.forEach(indexObj => {
                         const { start, end } = indexObj
-                        console.log(markdownLines)
-                        console.log(`start: ${start}, end: ${end}, length: ${end - start} `)
                         htmlLines.splice(start, end - start + 1, transformToHtml(markdownLines, indexObj))
+                    })
+                    return htmlLines
+                }
+            },
+            {
+                detect: function(markdownLines){
+                    const regex = /^([ ]*\| [^|]+ \|)/
+                    const indexObjects = []
+                    const isLastIndexObjectComplete = (indexObjects) => {
+                        if (indexObjects.length == 0){
+                            return false
+                        }else{
+                            const lastIndexObj = indexObjects[indexObjects.length - 1]
+                            return lastIndexObj.end != null
+                        }
+                    }
+                    markdownLines.forEach((line, i) => {
+                        if (regex.test(line)){
+                            if (indexObjects.length == 0 || isLastIndexObjectComplete(indexObjects)){
+                                indexObjects.push({start: i, end:null})
+                            }
+                            if (i == markdownLines.length - 1){
+                                indexObjects[indexObjects.length - 1].end = i
+                            }
+                        }else{
+                            if (indexObjects.length > 0 && !isLastIndexObjectComplete(indexObjects)){
+                                indexObjects[indexObjects.length - 1].end = i - 1
+                            }
+                        }
+                    })
+                    return indexObjects
+                },
+                transform: function(markdownLines, htmlLines){
+                    const indexObjects = this.detect(markdownLines)
+
+                    const transformLine = (line) => {
+                        console.log(line)
+                        let columns = line.match(/\| [^|]+ \|/g)
+                        console.log(columns)
+                        if (columns){
+                            columns = columns.map((column) => <td>{applyInlineMarkdown(column.replace(/^\|/, '').replace(/\|$/, ''))}</td>)
+                        }
+                        return <tr>{columns}</tr>
+                    }
+                    indexObjects.forEach((indexObj) => {
+                       const rows = []
+                       for (let i = indexObj.start; i <= indexObj.end; i++){
+                        const line = markdownLines[i]
+                        if (i == indexObj.start){
+                            rows.push(<thead>{transformLine(line)}</thead>)
+                        }else{
+                            rows.push(<tbody>{transformLine(line)}</tbody>)
+                        }
+                       }
+                       htmlLines.splice(indexObj.start, indexObj.end - indexObj.start + 1, <table>{rows}</table>) 
                     })
                     return htmlLines
                 }
