@@ -227,31 +227,31 @@ export default function Preview({markdownText}){
             },
             {
                 keywords: [
-                    /var/g,
-                    /let/g,
-                    /const/g,
-                    /if/g,
-                    /else/g,
-                    /switch/g,
-                    /case/g,
-                    /break/g,
-                    /for/g,
-                    /while/g,
-                    /do/g,
-                    /function/g,
-                    /return/g,
-                    /this/g,
-                    /new/g,
-                    /typeof/g,
-                    /null/g,
-                    /undefined/g,
-                    /true/g,
-                    /false/g,
-                    /try/g,
-                    /catch/g,
-                    /throw/g,
-                    /finally/g,
-                    /delete/g
+                    /\bvar\b/g,
+                    /\blet\b/g,
+                    /\bconst\b/g,
+                    /\bif\b/g,
+                    /\belse\b/g,
+                    /\bswitch\b/g,
+                    /\bcase\b/g,
+                    /\bbreak\b/g,
+                    /\bfor\b/g,
+                    /\bwhile\b/g,
+                    /\bdo\b/g,
+                    /\bfunction\b/g,
+                    /\breturn\b/g,
+                    /\bthis\b/g,
+                    /\bnew\b/g,
+                    /\btypeof\b/g,
+                    /\bnull\b/g,
+                    /\bundefined\b/g,
+                    /\btrue\b/g,
+                    /\bfalse\b/g,
+                    /\btry\b/g,
+                    /\bcatch\b/g,
+                    /\bthrow\b/g,
+                    /\bfinally\b/g,
+                    /\bdelete\b/g
                 ],
                 detectFunction: function(txt){
                     return generalDetectFunction(this.keywords, txt)
@@ -265,18 +265,18 @@ export default function Preview({markdownText}){
             },
             {
                 regexes: [
-                    /var [^;=]+[ ]*(=|;)/g,
-                    /let [^;=]+[ ]*(=|;)/g,
-                    /const [^;=]+[ ]*(=)/g,
-                    /function.+\(/g,
-                    /new .+\(/g 
+                    /\bvar\b [^;=]+[ ]*(=|;)/g,
+                    /\blet\b [^;=]+[ ]*(=|;)/g,
+                    /\bconst\b [^;=]+[ ]*(=)/g,
+                    /\bfunction\b.+\(/g,
+                    /\bnew\b .+\(/g 
                 ],
                 firstNegativeRegexes: [
-                    /^(var) /,
-                    /^(let) /,
-                    /^(const) /,
-                    /^(function) /,
-                    /^(new) /
+                    /^(\bvar\b) /,
+                    /^(\blet\b) /,
+                    /^(\bconst\b) /,
+                    /^(\bfunction\b) /,
+                    /^(\bnew\b) /
                 ],
                 secondNegativeRegexes: [
                     /=$|;$/,
@@ -327,12 +327,12 @@ export default function Preview({markdownText}){
             },
             {
                 regexes: [
-                    /function[^;=]+\([^(;)]+\)/g,
-                    /new [^;=]+\([^(;)]+\)/g 
+                    /\bfunction\b[^;=]+\([^(;)]+\)|\bfunction\b\([^(;)]+\)/g,
+                    /\bnew\b [^;=]+\([^(;)]+\)/g 
                 ],
                 negativeRegexes: [
-                    /function[^;=]+\(/g,
-                    /new [^;=]+\(/
+                    /\bfunction\b[^;=]+\(|\bfunction\b\(/g,
+                    /\bnew\b [^;=]+\(/
                 ],
                 detectFunction: function(txt){
                     return generalDetectFunction(this.regexes, txt)
@@ -380,14 +380,14 @@ export default function Preview({markdownText}){
             },
             {
                 regexes: [
-                    /(var [^;=]+[ ]*=[ ]*[^;=]+;)/g,
-                    /(let [^;=]+[ ]*=[ ]*[^;=]+;)/g,
-                    /(const [^;=]+[ ]*=[ ]*[^;=]+;)/g,
+                    /(\bvar\b [^;=]+[ ]*=[ ]*[^;=]+;)/g,
+                    /(\blet\b [^;=]+[ ]*=[ ]*[^;=]+;)/g,
+                    /(\bconst\b [^;=]+[ ]*=[ ]*[^;=]+;)/g,
                 ],
                 negativeRegexes: [
-                    /(var [^;=]+[ ]*=)/,
-                    /(let [^;=]+[ ]*=)/,
-                    /(const [^;=]+[ ]*=)/
+                    /(\bvar\b [^;=]+[ ]*=)/,
+                    /(\blet\b [^;=]+[ ]*=)/,
+                    /(\bconst\b [^;=]+[ ]*=)/
                 ],
                 detectFunction: function(txt){
                     return generalDetectFunction(this.regexes, txt)
