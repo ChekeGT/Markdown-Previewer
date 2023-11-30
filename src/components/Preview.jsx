@@ -373,7 +373,6 @@ export default function Preview({markdownText}){
                         matchIndexes: matchIndexes
                     }
 
-                    console.log(matchObj)
             
                     return matchObj
                 }
@@ -563,7 +562,8 @@ export default function Preview({markdownText}){
                     listIndexes.push({
                         startingIndex: i,
                         finalIndex: undefined,
-                        indentationLevel: indentationLevel
+                        indentationLevel: indentationLevel,
+                        type: /^([ ]*-)/.test(line) ? 'ul' : 'ol' 
                     })   
                 }
             }
@@ -619,9 +619,10 @@ export default function Preview({markdownText}){
                     const subList = subLists[i]
                     const firstIndex = subList[0]
 
-                    arrayTransformation.splice(arrayTransformation.indexOf(firstIndex), getSubListLength(subList), subList)
+                    arrayTransformation.splice(arrayTransformation.indexOf(firstIndex), getSubListLength(subList) - 1, subList)
                 }
             }
+            arrayTransformation.push({type: listIndex.type})
 
 
             return arrayTransformation
@@ -633,14 +634,24 @@ export default function Preview({markdownText}){
             return (<></>)
         }
 
-        listIndexes = listIndexes.map((listIndex, i) => (<>
-            {
-                    Array.isArray(listIndex) ?
-                     <ul key={`depth: ${depth}, index: ${i}}`}>{transformListIndexesToHtml(listIndex, markdownLines, depth + 1)}</ul> :
-                     <li key={`depth: ${depth}, index: ${i}}`}>{applyInlineMarkdown(markdownLines[listIndex].replace(/^([ ]*- )/, ''))}</li>
+        
+
+        listIndexes = listIndexes.map((listIndex, i) => {
+            if (Array.isArray(listIndex)){
+                let type = listIndex.pop().type
+
+                if (type == 'ol'){
+                    let start = markdownLines[listIndex[0]].match(/[ ]*\d+/)[0].match(/\d+/)[0]
+                    return <ol start={start} key={`depth: ${depth}, index: ${i}}`}>{transformListIndexesToHtml(listIndex, markdownLines, depth + 1)}</ol>
+                }
+                return <ul key={`depth: ${depth}, index: ${i}}`}>{transformListIndexesToHtml(listIndex, markdownLines, depth + 1)}</ul>
             }
-            </>)
-        )
+            return <>
+                {
+                    <li key={`depth: ${depth}, index: ${i}}`}>{applyInlineMarkdown(markdownLines[listIndex].replace(/^([ ]*- )|^([ ]*\d+. )/, ''))}</li>
+                }
+            </>
+        })
 
         return listIndexes 
     }
@@ -717,7 +728,7 @@ export default function Preview({markdownText}){
 
          const markdownLists = markdownListDetection(markdownLines)
          const listIndexes = transformListIndexesFromObjectIntoArray(markdownLists)
-
+         
 
          const htmlLists = transformListIndexesToHtml(listIndexes, markdownLines)
 
