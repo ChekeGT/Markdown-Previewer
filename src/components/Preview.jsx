@@ -505,6 +505,17 @@ export default function Preview({markdownText}){
         
         const inLineMarkdownDetectionAndTransform = [
             {
+                regex: /!\[[^[\]]+\]\([^()]+\)/g,
+                detectFunction: function(line){
+                    return this.regex.test(line)
+                },
+                transformFunction: function(txt){
+                    const alt = txt.match(/\[.+\]/)[0].replace(/^\[/,'').replace(/\]$/, '')
+                    const src = txt.match(/\(.+\)/)[0].replace(/^\(|\)$/g, '')
+                    return <img alt={alt} src={src}/>
+                }
+            },
+            {
                 regex: /(\*\* [^*]+ \*\*)/g,
                 matchFunction: function (line){
                     return line.match(this.regex)
@@ -826,9 +837,7 @@ export default function Preview({markdownText}){
                     const indexObjects = this.detect(markdownLines)
 
                     const transformLine = (line) => {
-                        console.log(line)
                         let columns = line.match(/\| [^|]+ \|/g)
-                        console.log(columns)
                         if (columns){
                             columns = columns.map((column) => <td>{applyInlineMarkdown(column.replace(/^\|/, '').replace(/\|$/, ''))}</td>)
                         }
