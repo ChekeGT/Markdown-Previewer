@@ -162,7 +162,7 @@ export default function Preview({markdownText}){
 
     function transformcodeSnippetIntoHtml(txt){
         let lines = txt.split('\n').map((line) => {
-            line = line.replace(/^(`{1,3}) /, '').replace(/ (`{1,3})$/, '')
+            line = line.replace(/^(`{1,3})/, '').replace(/ (`{1,3})$/, '')
             return line
         })
 
@@ -483,14 +483,17 @@ export default function Preview({markdownText}){
             }
             },
         ]
-        lines = lines.map((line) => {
+        lines = lines.map((line, index) => {
             for (let i = 0; i < allLineDetectionAndTransform.length; i++){
                 const obj = allLineDetectionAndTransform[i]
                 if (obj.detectFunction(line)){
                     return obj.transformFunction(line)
                 }
             }
-            return <>{applyInlineDetectionAndTransform(line)}</>
+            if (lines.length == 1 || index == 0 || index == lines.length - 1){
+                return <>{applyInlineDetectionAndTransform(line)}</>   
+            }
+            return <p>{applyInlineDetectionAndTransform(line)}</p>
         })
         
         
@@ -721,23 +724,99 @@ export default function Preview({markdownText}){
          })
     }
 
+    function applyMultiLineMarkdown(htmlLines, markdownLines){
+        const multiLineObjects = [
+            {
+                detect: (markdownLines) => markdownListDetection(markdownLines),
+                transform: function(markdownLines, htmlLines){
+                    const markdownLists = markdownListDetection(markdownLines)
+                    const listIndexes = transformListIndexesFromObjectIntoArray(markdownLists)
+                    
+           
+                    const htmlLists = transformListIndexesToHtml(listIndexes, markdownLines)
+
+                    return placeListsInHtmlLinesList(htmlLines, markdownLists, htmlLists)
+                }
+            },
+            {
+                detect: function (markdownLines){
+                    const regex = /`{3}/
+                    let indexObjects = []
+
+                    const isLastIndexObjectComplete = (indexObjects) => {
+                        if (indexObjects.length == 0){
+                            return false
+                        }else{
+                            const lastIndexObj = indexObjects[indexObjects.length - 1]
+                            return lastIndexObj.end != null
+                        }
+                    }
+                    for (let i = 0; i < markdownLines.length; i++){
+                        const line = markdownLines[i]
+                        if (regex.test(line)){
+                            let match = regex.exec(line)
+                            if (indexObjects.length == 0){
+                                indexObjects.push({start: i, end: null, inlineStart: match.index })
+                            }else{
+                                if (isLastIndexObjectComplete(indexObjects)){
+                                    indexObjects.push({start:i, end:null})
+                                }else{
+                                    indexObjects[indexObjects.length - 1].end = i
+                                    indexObjects[indexObjects.length - 1].inlineEnd = match.index + 3
+                                }
+                            }
+                        }
+                    }   
+                    indexObjects = indexObjects.filter((indexObj) => indexObj.end != null)
+                    return indexObjects
+                },
+                transform: function (markdownLines, htmlLines){
+                    const indexObjects = this.detect(markdownLines)
+                    const transformToHtml = (markdownLines, indexObj) => {
+                        const section = markdownLines.slice(indexObj.start, indexObj.end + 1)
+                        const firstString =  <>{applyInlineMarkdown(section[0].slice(0, indexObj.inlineStart))}</>
+                        const endingString = <>{applyInlineMarkdown(section[section.length - 1].slice(indexObj.inlineEnd,))}</>
+
+                        section[0] = section[0].slice(indexObj.inlineStart + 1, )
+                        section[section.length - 1] = section[section.length -1].slice(0, indexObj.inlineEnd)
+                        return (
+                            <>
+                                {firstString}
+                                <code>{transformcodeSnippetIntoHtml(section.join('\n'))}</code>
+                                {endingString}
+                            </>
+                        )
+                    }
+                    indexObjects.forEach(indexObj => {
+                        const { start, end } = indexObj
+                        console.log(markdownLines)
+                        console.log(`start: ${start}, end: ${end}, length: ${end - start} `)
+                        htmlLines.splice(start, end - start + 1, transformToHtml(markdownLines, indexObj))
+                    })
+                    return htmlLines
+                }
+            }
+        ]
+
+        multiLineObjects.forEach((obj) => {
+            if(obj.detect(markdownLines)){
+                htmlLines = obj.transform(markdownLines, htmlLines)
+            }
+        })
+
+        return htmlLines
+    }
+
 
     function transformMarkdownTextToHtml(text){
         
          const markdownLines =  text.split('\n')
 
-         const markdownLists = markdownListDetection(markdownLines)
-         const listIndexes = transformListIndexesFromObjectIntoArray(markdownLists)
-         
-
-         const htmlLists = transformListIndexesToHtml(listIndexes, markdownLines)
 
 
          let htmlLines = applyAllLineMarkdown(markdownLines)
 
-
-         htmlLines = placeListsInHtmlLinesList(htmlLines, markdownLists, htmlLists)
-         return htmlLines
+         return applyMultiLineMarkdown(htmlLines, markdownLines)
     }
 
     return (
