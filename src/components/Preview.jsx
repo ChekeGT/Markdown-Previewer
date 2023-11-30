@@ -516,6 +516,17 @@ export default function Preview({markdownText}){
                 }
             },
             {
+                regex:/\[[^[\]]+\]\([^()]+\)/g,
+                detectFunction: function(line){
+                    return this.regex.test(line)
+                },
+                transformFunction: function(txt){
+                    const text = txt.match(/\[[^[\]]+\]/)[0].replace(/^\[|\]$/g, '')
+                    const url = txt.match(/\([^()]+\)/)[0].replace(/^\(|\)$/g, '')
+                    return <a href={url} target="_blank" rel="noreferrer">{text}</a>
+                }
+            },
+            {
                 regex: /(\*\* [^*]+ \*\*)/g,
                 matchFunction: function (line){
                     return line.match(this.regex)
