@@ -40,6 +40,26 @@ export default function Preview({markdownText}){
         return orderedMatchObj
     }
 
+    const sortIndexObjects = (indexObjects, transfomedIndexObjects) => {
+        const indexObjectsCopy = [...indexObjects]
+        indexObjects.sort((a,b) => {
+            const startingA = a.startingIndex
+            const startingB = b.startingIndex
+            return startingA - startingB
+        })
+
+        const sortedTransformedIndexObjects = []
+        indexObjects.forEach((indexObj) => {
+            const previousIndex = indexObjectsCopy.indexOf(indexObj)
+            sortedTransformedIndexObjects.push(transfomedIndexObjects[previousIndex])
+        })
+        
+        return {
+            indexObjects: indexObjects,
+            transformedIndexObjects: sortedTransformedIndexObjects
+        }
+    }
+
 
     const transformMatchObjToHtml = (matchObj, line) => {
         matchObj = sortMatchObj(matchObj)
@@ -738,11 +758,9 @@ export default function Preview({markdownText}){
                 const obj =  allLineMarkdownDetectionAndTransform[i]
                 if (obj.detectFunction(markdownLine)){
                     return obj.transformFunction(markdownLine)
-                }else{
-                  return (<p>{applyInlineMarkdown(markdownLine)}</p>)  
                 }
             }
-            return markdownLine
+            return <p>{applyInlineMarkdown(markdownLine)}</p>
          })
     }
 
@@ -750,14 +768,15 @@ export default function Preview({markdownText}){
         const multiLineObjects = [
             {
                 detect: (markdownLines) => markdownListDetection(markdownLines),
-                transform: function(markdownLines, htmlLines){
+                transform: function(markdownLines){
                     const markdownLists = markdownListDetection(markdownLines)
                     const listIndexes = transformListIndexesFromObjectIntoArray(markdownLists)
                     
            
                     const htmlLists = transformListIndexesToHtml(listIndexes, markdownLines)
 
-                    return placeListsInHtmlLinesList(htmlLines, markdownLists, htmlLists)
+                    return htmlLists
+
                 }
             },
             {
@@ -770,7 +789,7 @@ export default function Preview({markdownText}){
                             return false
                         }else{
                             const lastIndexObj = indexObjects[indexObjects.length - 1]
-                            return lastIndexObj.end != null
+                            return lastIndexObj.finalIndex != null
                         }
                     }
                     for (let i = 0; i < markdownLines.length; i++){
@@ -778,24 +797,24 @@ export default function Preview({markdownText}){
                         if (regex.test(line)){
                             let match = regex.exec(line)
                             if (indexObjects.length == 0){
-                                indexObjects.push({start: i, end: null, inlineStart: match.index })
+                                indexObjects.push({startingIndex: i, finalIndex: null, inlineStart: match.index })
                             }else{
                                 if (isLastIndexObjectComplete(indexObjects)){
-                                    indexObjects.push({start:i, end:null})
+                                    indexObjects.push({startingIndex:i, finalIndex:null})
                                 }else{
-                                    indexObjects[indexObjects.length - 1].end = i
+                                    indexObjects[indexObjects.length - 1].finalIndex = i
                                     indexObjects[indexObjects.length - 1].inlineEnd = match.index + 3
                                 }
                             }
                         }
                     }   
-                    indexObjects = indexObjects.filter((indexObj) => indexObj.end != null)
+                    indexObjects = indexObjects.filter((indexObj) => indexObj.finalIndex != null)
                     return indexObjects
                 },
-                transform: function (markdownLines, htmlLines){
+                transform: function (markdownLines, ){
                     const indexObjects = this.detect(markdownLines)
                     const transformToHtml = (markdownLines, indexObj) => {
-                        const section = markdownLines.slice(indexObj.start, indexObj.end + 1)
+                        const section = markdownLines.slice(indexObj.startingIndex, indexObj.finalIndex + 1)
                         const firstString =  <>{applyInlineMarkdown(section[0].slice(0, indexObj.inlineStart))}</>
                         const endingString = <>{applyInlineMarkdown(section[section.length - 1].slice(indexObj.inlineEnd,))}</>
 
@@ -809,11 +828,9 @@ export default function Preview({markdownText}){
                             </>
                         )
                     }
-                    indexObjects.forEach(indexObj => {
-                        const { start, end } = indexObj
-                        htmlLines.splice(start, end - start + 1, transformToHtml(markdownLines, indexObj))
+                    return indexObjects.map(indexObj => {
+                        return transformToHtml(markdownLines, indexObj)
                     })
-                    return htmlLines
                 }
             },
             {
@@ -825,26 +842,27 @@ export default function Preview({markdownText}){
                             return false
                         }else{
                             const lastIndexObj = indexObjects[indexObjects.length - 1]
-                            return lastIndexObj.end != null
+                            return lastIndexObj.finalIndex != null
                         }
                     }
                     markdownLines.forEach((line, i) => {
                         if (regex.test(line)){
                             if (indexObjects.length == 0 || isLastIndexObjectComplete(indexObjects)){
-                                indexObjects.push({start: i, end:null})
+                                indexObjects.push({startingIndex: i, finalIndex:null})
                             }
                             if (i == markdownLines.length - 1){
-                                indexObjects[indexObjects.length - 1].end = i
+                                indexObjects[indexObjects.length - 1].finalIndex = i
                             }
                         }else{
                             if (indexObjects.length > 0 && !isLastIndexObjectComplete(indexObjects)){
-                                indexObjects[indexObjects.length - 1].end = i - 1
+                                indexObjects[indexObjects.length - 1].finalIndex = i - 1
                             }
                         }
                     })
+
                     return indexObjects
                 },
-                transform: function(markdownLines, htmlLines){
+                transform: function(markdownLines){
                     const indexObjects = this.detect(markdownLines)
 
                     const transformLine = (line) => {
@@ -854,28 +872,51 @@ export default function Preview({markdownText}){
                         }
                         return <tr>{columns}</tr>
                     }
-                    indexObjects.forEach((indexObj) => {
+                    return indexObjects.map((indexObj) => {
                        const rows = []
-                       for (let i = indexObj.start; i <= indexObj.end; i++){
+                       for (let i = indexObj.startingIndex; i <= indexObj.finalIndex; i++){
                         const line = markdownLines[i]
-                        if (i == indexObj.start){
+                        if (i == indexObj.startingIndex){
                             rows.push(<thead>{transformLine(line)}</thead>)
                         }else{
                             rows.push(<tbody>{transformLine(line)}</tbody>)
                         }
                        }
-                       htmlLines.splice(indexObj.start, indexObj.end - indexObj.start + 1, <table>{rows}</table>) 
+                       return <table>{rows}</table>
                     })
-                    return htmlLines
                 }
             }
         ]
 
+        let indexObjects = []
+        let transformedIndexObjects = []
         multiLineObjects.forEach((obj) => {
-            if(obj.detect(markdownLines)){
-                htmlLines = obj.transform(markdownLines, htmlLines)
+            const detect = obj.detect(markdownLines)
+            if(detect.length > 0){
+                indexObjects.push(...detect)
+                transformedIndexObjects.push(...obj.transform(markdownLines, htmlLines))
             }
         })
+        let sortedObj = sortIndexObjects(indexObjects, transformedIndexObjects)
+        
+        let numberOfDeletedObjects = 0
+        console.log(sortedObj.indexObjects, sortedObj.transformedIndexObjects)
+
+        sortedObj.indexObjects.forEach((obj, i) => {
+            const { startingIndex, finalIndex } = obj
+            const deletedObjectsForThisIteration = finalIndex - startingIndex   
+
+            
+            htmlLines[startingIndex - numberOfDeletedObjects] = sortedObj.transformedIndexObjects[i]
+
+            console.log(`length: ${htmlLines.length}, start: ${startingIndex - numberOfDeletedObjects}, deleted: ${deletedObjectsForThisIteration} finalIndex:${startingIndex - numberOfDeletedObjects + 1 + deletedObjectsForThisIteration}`)
+            htmlLines.splice(startingIndex + 1 - numberOfDeletedObjects, deletedObjectsForThisIteration)
+            numberOfDeletedObjects += deletedObjectsForThisIteration
+
+
+        })
+
+        
 
         return htmlLines
     }
@@ -889,7 +930,10 @@ export default function Preview({markdownText}){
 
          let htmlLines = applyAllLineMarkdown(markdownLines)
 
-         return applyMultiLineMarkdown(htmlLines, markdownLines)
+         htmlLines = applyMultiLineMarkdown(htmlLines, markdownLines)
+
+         return htmlLines
+         
     }
 
     return (
