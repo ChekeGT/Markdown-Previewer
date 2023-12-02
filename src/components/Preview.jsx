@@ -700,43 +700,18 @@ export default function Preview({markdownText}){
                 let type = listIndex.pop().type
 
                 if (type == 'ol'){
-                    let start = markdownLines[listIndex[0]].match(/[ ]*\d+/)[0].match(/\d+/)[0]
-                    return <ol start={start} key={`depth: ${depth}, index: ${i}}`}>{transformListIndexesToHtml(listIndex, markdownLines, depth + 1)}</ol>
+                    return <ul className="ol" key={`depth: ${depth}, index: ${i}}`}>{transformListIndexesToHtml(listIndex, markdownLines, depth + 1)}</ul>
                 }
                 return <ul key={`depth: ${depth}, index: ${i}}`}>{transformListIndexesToHtml(listIndex, markdownLines, depth + 1)}</ul>
             }
             return <>
                 {
-                    <li key={`depth: ${depth}, index: ${i}}`}>{applyInlineMarkdown(markdownLines[listIndex].replace(/^([ ]*- )|^([ ]*\d+. )/, ''))}</li>
+                    <li key={`depth: ${depth}, index: ${i}}`}>{applyInlineMarkdown(markdownLines[listIndex].replace(/^([ ]*- )/, ''))}</li>
                 }
             </>
         })
 
         return listIndexes 
-    }
-
-    function placeListsInHtmlLinesList(htmlLines, markdownListsObjects, markdownListsHtml){
-
-        if (htmlLines && markdownListsObjects && markdownListsHtml){
-            const firstAndFinalIndexes = []
-            markdownListsObjects.forEach((markdownListObj, i) => {
-                const firstIndex = markdownListObj.startingIndex
-                const finalIndex = markdownListObj.finalIndex
-                firstAndFinalIndexes.push([firstIndex, finalIndex]) 
-
-                htmlLines[firstIndex] = markdownListsHtml[i]
-            })
-
-            let removedObjects = 0
-            firstAndFinalIndexes.forEach((firstAndFinalIndex) => {
-                const numberOfDeletedObjects = firstAndFinalIndex[1] - firstAndFinalIndex[0]
-                
-                htmlLines.splice(firstAndFinalIndex[0] + 1 - removedObjects, numberOfDeletedObjects)
-                removedObjects +=  numberOfDeletedObjects
-            })
-        }
-
-        return htmlLines
     }
 
     function applyAllLineMarkdown(markdownLines){
