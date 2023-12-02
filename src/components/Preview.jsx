@@ -177,7 +177,7 @@ export default function Preview({markdownText, toggleFullVisibility, openState})
 
     function transformcodeSnippetIntoHtml(txt){
         let lines = txt.split('\n').map((line) => {
-            line = line.replace(/^(`{1,3})/, '').replace(/ (`{1,3})$/, '')
+            line = line.replace(/^(`{1,3} )|(`{1,3})/, '').replace(/ (`{1,3})$|(`{1,3})$/, '')
             return line
         })
 
@@ -236,6 +236,24 @@ export default function Preview({markdownText, toggleFullVisibility, openState})
                     return generalDetectFunction(this.keywords, txt)
                   },
                   transformFunction: (txt) => (<span className="token operator">{txt}</span>),
+                  getMatchObj: function (txt){
+                    return getMatchObj(this.keywords, this.transformFunction, txt)
+                }
+            },
+            {
+                keywords: [
+                    /[ ]+/g
+                  ],
+                  detectFunction: function(txt){
+                    return generalDetectFunction(this.keywords, txt)
+                  },
+                  transformFunction: (txt) => {
+                    const spaceArray = []
+                    for (let i = 0; i < txt.length; i++){
+                        spaceArray.push(<>&nbsp;</>)
+                    }
+                    return (<span className="token space">{spaceArray}</span>)
+                },
                   getMatchObj: function (txt){
                     return getMatchObj(this.keywords, this.transformFunction, txt)
                 }
@@ -494,7 +512,7 @@ export default function Preview({markdownText, toggleFullVisibility, openState})
                 return this.regex.test(line)
             },
             transformFunction: function(line){
-                return (<span className={`token ${this.name}`}>{line.replace(this.regex, '')}</span>)
+                return (<span className={`token ${this.name}`}>{line}</span>)
             }
             },
         ]
@@ -512,7 +530,7 @@ export default function Preview({markdownText, toggleFullVisibility, openState})
         })
         
         
-        return (<>{lines}</>)
+        return (<code className={lines.length > 1 ? 'multi-line-code' : 'inline-code'}>{lines}</code>)
         
     }
     function applyInlineMarkdown(markdownLine){
@@ -578,7 +596,7 @@ export default function Preview({markdownText, toggleFullVisibility, openState})
                     return this.regex.test(line)
                 },
                 transformFunction: function(txt){
-                    return (<code>{transformcodeSnippetIntoHtml(txt)}</code>)
+                    return (<>{transformcodeSnippetIntoHtml(txt)}</>)
                 }
             }
         ]
@@ -807,7 +825,7 @@ export default function Preview({markdownText, toggleFullVisibility, openState})
                         return (
                             <>
                                 {firstString}
-                                <code>{transformcodeSnippetIntoHtml(section.join('\n'))}</code>
+                                <>{transformcodeSnippetIntoHtml(section.join('\n'))}</>
                                 {endingString}
                             </>
                         )
