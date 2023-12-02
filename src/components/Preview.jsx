@@ -564,6 +564,20 @@ export default function Preview({markdownText}){
                 transformFunction: ((txt) => (<i>{txt.replace(/(^\*)/, '').replace(/\*$/, '')}</i>)),
             },
             {
+                regex: /(\*\. [^*.]+ \.\*)/g,
+                detectFunction: function(line){
+                    return this.regex.test(line)
+                },
+                transformFunction:  txt => (<i><strong>{txt.replace(/^(\*\.)|(\.\*)$/g, '')}</strong></i>)
+            },
+            {
+                regex: /(~~ [^~]+ ~~)/g,
+                detectFunction: function(line){
+                    return this.regex.test(line)
+                },
+                transformFunction: txt => <s>{txt.replace(/^(~~)|(~~)$/g, '')}</s>
+            },
+            {
                 regex: /(`{1,3} [^`]+ `{1,3})/g,
                 detectFunction: function (line){
                     return this.regex.test(line)

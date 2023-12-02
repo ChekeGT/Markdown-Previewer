@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react"
 import ComponentHeader from "./ComponentHeader"
 import '../sass/Editor.sass'
-import txtPath from "./defaultTxt.txt"
 
 const defaultTxt = `
 # Welcome to my React Markdown Previewer!
@@ -9,7 +8,7 @@ const defaultTxt = `
 ## This is a sub-heading...
 ### And here's some other cool stuff:
         
-Heres some code, \`<div></div>\`, between 2 backticks.
+Heres some code, \` <div></div> \`, between 2 backticks.
         
 \`\`\`
 // this is multi-line code:
@@ -22,6 +21,7 @@ function anotherExample(firstLine, lastLine) {
 \`\`\`
         
 You can also make text ** bold **... whoa!
+Or *. both .*
 Or * italic *.
 And feel free to go crazy ~~ crossing stuff out ~~.
         
