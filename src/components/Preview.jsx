@@ -854,24 +854,45 @@ export default function Preview({markdownText}){
                 transform: function(markdownLines){
                     const indexObjects = this.detect(markdownLines)
 
-                    const transformLine = (line) => {
+                    const isLineASeparation = (line) => {
+                        let columns = line.match(/\| [^|]+ \|/g)
+                        columns = columns.map((column) => column.replace(/^(\| )/, '').replace(/( \|)$/, ''))
+                        let isSeparation = true
+                        columns.forEach((column) => {
+                            for (let i = 0; i < column.length; i++){
+                                const character = column[i]
+                                if (character != '-'){
+                                    isSeparation = false
+                                }
+                            }
+                        })
+                        return isSeparation
+                    }
+
+                    const transformLine = (line, isfirstLine = false) => {
                         let columns = line.match(/\| [^|]+ \|/g)
                         if (columns){
-                            columns = columns.map((column) => <td>{applyInlineMarkdown(column.replace(/^\|/, '').replace(/\|$/, ''))}</td>)
+                            columns = columns.map((column) => {
+                                const inlineMarkdown = applyInlineMarkdown(column.replace(/^\|/, '').replace(/\|$/, '')) 
+                                return (isfirstLine ? <th>{inlineMarkdown}</th> : <td>{inlineMarkdown}</td>)
+                            })
                         }
-                        return <tr>{columns}</tr>
+                        return isLineASeparation(line) ? <></> : <>{columns}</>
                     }
                     return indexObjects.map((indexObj) => {
-                       const rows = []
+                       const html = []
+                       const tbodyRows = []
                        for (let i = indexObj.startingIndex; i <= indexObj.finalIndex; i++){
                         const line = markdownLines[i]
+                        const isNextLineASeparation = i == indexObj.finalIndex ? undefined : isLineASeparation(markdownLines[i + 1]) 
                         if (i == indexObj.startingIndex){
-                            rows.push(<thead>{transformLine(line)}</thead>)
+                            html.push(<thead><tr className={isNextLineASeparation ? 'separation' : ''}>{transformLine(line, true)}</tr></thead>)
                         }else{
-                            rows.push(<tbody>{transformLine(line)}</tbody>)
+                            tbodyRows.push(<tr className={isNextLineASeparation ? 'separation' : ''}>{transformLine(line)}</tr>)
                         }
                        }
-                       return <table>{rows}</table>
+                       html.push(<tbody>{tbodyRows}</tbody>)
+                       return <table>{html}</table>
                     })
                 }
             }
@@ -889,7 +910,6 @@ export default function Preview({markdownText}){
         let sortedObj = sortIndexObjects(indexObjects, transformedIndexObjects)
         
         let numberOfDeletedObjects = 0
-        console.log(sortedObj.indexObjects, sortedObj.transformedIndexObjects)
 
         sortedObj.indexObjects.forEach((obj, i) => {
             const { startingIndex, finalIndex } = obj
@@ -898,7 +918,6 @@ export default function Preview({markdownText}){
             
             htmlLines[startingIndex - numberOfDeletedObjects] = sortedObj.transformedIndexObjects[i]
 
-            console.log(`length: ${htmlLines.length}, start: ${startingIndex - numberOfDeletedObjects}, deleted: ${deletedObjectsForThisIteration} finalIndex:${startingIndex - numberOfDeletedObjects + 1 + deletedObjectsForThisIteration}`)
             htmlLines.splice(startingIndex + 1 - numberOfDeletedObjects, deletedObjectsForThisIteration)
             numberOfDeletedObjects += deletedObjectsForThisIteration
 
