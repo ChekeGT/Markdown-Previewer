@@ -30,7 +30,7 @@ There's also [links](https://www.freecodecamp.org), and
         
 And if you want to get really crazy, even tables:
         
-| Wild Header | Crazy Header | | Another Header? |
+| Wild Header | | Crazy Header | | Another Header? |
 | ------------ | | ------------- | | ------------- |
 | Your content can | | be here, and it | | can be here.... | 
 | And here. | | Okay. | | I think we get it. |
@@ -48,12 +48,7 @@ And if you want to get really crazy, even tables:
 ![freeCodeCamp Logo](https://cdn.freecodecamp.org/testable-projects-fcc/images/fcc_secondary.svg)
 `
 
-export default function Editor({value, updateValue}){
-    const [editorOpenState, updateEditorOpenState] = useState(false)
-
-    function toggleEditorOpenState(){
-        updateEditorOpenState(!editorOpenState)
-    }
+export default function Editor({value, updateValue, toggleFullVisibility, openState}){
     
     function handleEditorChange(e){
         let value = e.target.value
@@ -65,8 +60,8 @@ export default function Editor({value, updateValue}){
     }, [])
 return (
     <div className="editor-general-container">
-        <ComponentHeader title={'Editor'} toggleOpenState={toggleEditorOpenState} openState={editorOpenState}/>
-        <textarea value={value} onChange={handleEditorChange} className={`editor-textarea ${editorOpenState ? 'open' : ''}`}></textarea>
+        <ComponentHeader title={'Editor'} toggleOpenState={toggleFullVisibility} openState={openState}/>
+        <textarea value={value} onChange={handleEditorChange} className={`editor-textarea ${openState ? 'open' : ''}`}></textarea>
     </div>
 )
 }

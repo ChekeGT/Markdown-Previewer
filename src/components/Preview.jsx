@@ -2,12 +2,7 @@ import { useState } from "react"
 import ComponentHeader from "./ComponentHeader"
 import "../sass/Preview.sass"
 
-export default function Preview({markdownText}){
-    const [previewOpenState, updatePreviewOpenState] = useState(false)
-
-    function togglePreviewOpenState(){
-        updatePreviewOpenState(!previewOpenState)
-    }
+export default function Preview({markdownText, toggleFullVisibility, openState}){
 
     const sortMatchObj = (matchObj) => {
         let {transformedMatches, matchIndexes } = matchObj
@@ -946,7 +941,7 @@ export default function Preview({markdownText}){
 
     return (
         <div className="preview-component">
-            <ComponentHeader title={'Preview'} toggleOpenState={togglePreviewOpenState} openState={previewOpenState}/>
+            <ComponentHeader title={'Preview'} toggleOpenState={toggleFullVisibility} openState={openState}/>
             <div className="markdown-preview-container">
                 {transformMarkdownTextToHtml(markdownText)}
             </div>
