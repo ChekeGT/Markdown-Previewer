@@ -5,6 +5,7 @@
         border: 1px solid black
         min-height: 200px
         background: #c0d8d8
+        padding: 0 1rem
 
 
 
@@ -16,6 +17,8 @@ code
     margin: 0 0.2rem
     text-align: justify
     font-weight: bold
+    overflow: auto
+    white-space: nowrap
     .token.operator
         color: #9a6e3a
     .token.keyword
@@ -37,6 +40,10 @@ code
 .multi-line-code
     min-width: 95%
 
+@media (max-width: 500px) 
+    .multi-line-code
+        max-width: 80%
+
 img
     width: auto
     max-width: 90%
@@ -46,6 +53,9 @@ img
 // Table related styles
 table
     border-collapse: collapse
+    display: block
+    overflow: auto
+    white-space: nowrap
     $border-default-settings: 2px solid #224b4b
     td,th
         padding: 0.5rem
@@ -61,3 +71,9 @@ table
     .after-separation
         td,th
             border-top: none
+
+@media (max-width: 500px) 
+    table
+        width: 90%
+        margin: 0 auto
+        

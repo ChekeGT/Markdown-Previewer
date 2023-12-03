@@ -1,6 +1,7 @@
 import { useState } from "react"
 import Editor from "./components/Editor"
 import Preview from "./components/Preview"
+import "./sass/App.sass"
 function App() {
   
   const [editorText, updateEditorText ] = useState('')
@@ -20,7 +21,7 @@ function App() {
 
 
   return (
-    <>
+    <div className="general-container">
       {renderedComponents.editor && renderedComponents.preview ? 
       <>
         <Editor value={editorText} updateValue={updateEditorText} toggleFullVisibility={togglePreviewVisibility} openState={!renderedComponents.preview}/>
@@ -28,7 +29,7 @@ function App() {
       </>: renderedComponents.editor ? <Editor value={editorText} updateValue={updateEditorText} toggleFullVisibility={togglePreviewVisibility} openState={!renderedComponents.preview}/>
       : renderedComponents.preview ? <Preview markdownText={editorText} toggleFullVisibility={toggleEditorVisibility} openState={!renderedComponents.editor}/> : <></>
       }
-    </>
+    </div>
   )
 }
 
