@@ -20,7 +20,7 @@ function anotherExample(firstLine, lastLine) {
 }
 \`\`\`
         
-You can also make text ** bold **... whoa!
+You can also make text **bold**... whoa!
 Or *. both .*
 Or * italic *.
 And feel free to go crazy ~~ crossing stuff out ~~.

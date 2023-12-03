@@ -1,6 +1,7 @@
 import { useState } from "react"
 import ComponentHeader from "./ComponentHeader"
 import "../sass/Preview.sass"
+import { marked } from "marked"
 
 export default function Preview({markdownText, toggleFullVisibility, openState}){
 
@@ -962,8 +963,7 @@ export default function Preview({markdownText, toggleFullVisibility, openState})
     return (
         <div className="preview-component">
             <ComponentHeader title={'Preview'} toggleOpenState={toggleFullVisibility} openState={openState}/>
-            <div id="preview" className="markdown-preview-container">
-                {transformMarkdownTextToHtml(markdownText)}
+            <div id="preview" dangerouslySetInnerHTML={{__html: marked(markdownText)}} className="markdown-preview-container">
             </div>
         </div>
     )
