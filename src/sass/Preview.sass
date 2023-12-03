@@ -36,3 +36,28 @@ code
         margin: 0.5rem 0
 .multi-line-code
     min-width: 95%
+
+img
+    width: auto
+    max-width: 90%
+    margin: 0 auto
+    object-fit: cover
+
+// Table related styles
+table
+    border-collapse: collapse
+    $border-default-settings: 2px solid #224b4b
+    td,th
+        padding: 0.5rem
+    .not-separation
+        td, th
+            border: $border-default-settings
+    .separation
+        td,th
+            border-top: $border-default-settings
+            border-left: $border-default-settings
+            border-right: $border-default-settings
+            border-bottom: 4px solid #4a4a48
+    .after-separation
+        td,th
+            border-top: none

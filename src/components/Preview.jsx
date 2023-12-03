@@ -898,10 +898,12 @@ export default function Preview({markdownText, toggleFullVisibility, openState})
                        for (let i = indexObj.startingIndex; i <= indexObj.finalIndex; i++){
                         const line = markdownLines[i]
                         const isNextLineASeparation = i == indexObj.finalIndex ? undefined : isLineASeparation(markdownLines[i + 1]) 
+                        const tableBeforeIsASeparation = i == indexObj.startingIndex ? undefined : isLineASeparation(markdownLines[i - 1])
+                        const className = `${tableBeforeIsASeparation ? 'after-separation': ''} ${isNextLineASeparation ? 'separation' : 'not-separation'}`
                         if (i == indexObj.startingIndex){
-                            html.push(<thead><tr className={isNextLineASeparation ? 'separation' : ''}>{transformLine(line, true)}</tr></thead>)
+                            html.push(<thead><tr className={className}>{transformLine(line, true)}</tr></thead>)
                         }else{
-                            tbodyRows.push(<tr className={isNextLineASeparation ? 'separation' : ''}>{transformLine(line)}</tr>)
+                            tbodyRows.push(<tr className={className}>{transformLine(line)}</tr>)
                         }
                        }
                        html.push(<tbody>{tbodyRows}</tbody>)
