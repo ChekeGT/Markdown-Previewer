@@ -751,7 +751,7 @@ export default function Preview({markdownText, toggleFullVisibility, openState})
             },
             {
                 detectFunction: ((line) => /^>/.test(line)),
-                transformFunction: ((line) => (<p className="quoteblock">{applyInlineMarkdown(line.replace(/^>/, ''))}</p>))
+                transformFunction: ((line) => (<blockquote>{applyInlineMarkdown(line.replace(/^>/, ''))}</blockquote>))
             },
         ]
 
@@ -962,7 +962,7 @@ export default function Preview({markdownText, toggleFullVisibility, openState})
     return (
         <div className="preview-component">
             <ComponentHeader title={'Preview'} toggleOpenState={toggleFullVisibility} openState={openState}/>
-            <div className="markdown-preview-container">
+            <div id="preview" className="markdown-preview-container">
                 {transformMarkdownTextToHtml(markdownText)}
             </div>
         </div>

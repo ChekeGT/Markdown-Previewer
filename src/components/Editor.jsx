@@ -61,7 +61,7 @@ export default function Editor({value, updateValue, toggleFullVisibility, openSt
 return (
     <div className="editor-general-container">
         <ComponentHeader title={'Editor'} toggleOpenState={toggleFullVisibility} openState={openState}/>
-        <textarea value={value} onChange={handleEditorChange} className={`editor-textarea ${openState ? 'open' : ''}`}></textarea>
+        <textarea id="editor" value={value} onChange={handleEditorChange} className={`editor-textarea ${openState ? 'open' : ''}`}></textarea>
     </div>
 )
 }
